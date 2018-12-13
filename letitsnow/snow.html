@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf8">
+        <title>Let It Snow demo</title>
+        <script src="snow.js"></script>
+<style>
+body,
+html{
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    min-height: 100vh;
+    min-width: 100%;
+}
+
+*{
+    box-sizing: border-box;
+}
+
+#snow{
+    width: 100%;
+    height: 100%;
+}
+</style>
+    <script>
+        window.addEventListener("load", function(){
+            letItSnow({
+                'max_particles': 200,
+                'base_speed': 200,
+                'max_xspeed': 300,
+                'max_tradius': 20,
+                'max_tduration': 5000,
+                'interactive': true,
+            });
+        });
+    </script>
+    </head>
+    <body>
+        <canvas id="snow"></canvas>
+    </body>
+</html>
