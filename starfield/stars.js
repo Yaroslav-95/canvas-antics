@@ -34,10 +34,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // ix and iy are the x,y coordinates in 'space', posz is how
 // far away from the screen the particle/star is
-function Particle(ix, iy, posz){
+function Particle(ix, iy, posz, rgb){
     this.ix = ix;
     this.iy = iy;
     this.posz = posz;
+    this.rgb = rgb;
 
     // getX and getY get the projected coordinates, that is the real x, y
     // coordinate on 'screen' rather than 'space'
@@ -59,6 +60,7 @@ function warpLaunch(options={}){
     var step =
         options.hasOwnProperty('step') ? options['step'] : 2;
     var interactive = options['interactive'];
+    var color = options['color'];
 
     var canvas = document.getElementById("stars");
     if(!canvas){
@@ -124,7 +126,18 @@ function warpLaunch(options={}){
         let ix = getRandomPos(canvas.width/3);
         let iy = getRandomPos(canvas.height/2);
         let posz = randomRange(0, 200);
-        return new Particle(ix, iy, posz);
+        if (!color)
+            return new Particle(ix, iy, posz, [255, 255, 255]);
+        let b = randomRange(178, 255);
+        if (b >= 180){
+            let r = randomRange(100, b-50);
+            let g = randomRange(100, b-20);
+            return new Particle(ix, iy, posz, [r, g, b]);
+        }
+        b = randomRange(0, 150);
+        let r = randomRange(180, 255);
+        let g = randomRange(20, r-50);
+        return new Particle(ix, iy, posz, [r, g, b]);
     }
 
     // Init all the stars, and place them randomly on screen
@@ -139,14 +152,21 @@ function warpLaunch(options={}){
         requestedFrame = window.requestAnimationFrame(nextFrame);
     }
 
-    // Function to draw prerender star to the onscreen canvas
     function drawStar(particle){
-        let scale = (1 - particle.posz/200) * 1.5 + 0.25;
-        let p = scale/2;
-        ctx.globalAlpha = p;
+        let alpha = (1 - particle.posz/200) + 0.1;
+        let scale = alpha*2
+        ctx.globalAlpha = alpha;
         ctx.translate(particle.getX(canvas.width), particle.getY(canvas.height));
         ctx.scale(scale, scale);
-        ctx.drawImage(starsprite, 0, 0);
+        ctx.fillStyle = "rgba("+particle.rgb[0]+
+            ", "+particle.rgb[1]+
+            ", "+particle.rgb[2]+", 0.8)";
+        ctx.fillRect(0, 2, 5, 1);
+        ctx.fillRect(2, 0, 1, 5);
+        ctx.fillStyle = "rgba("+particle.rgb[0]+
+            ", "+particle.rgb[1]+
+            ", "+particle.rgb[2]+", 0.5)";
+        ctx.fillRect(1, 1, 3, 3);
         ctx.restore();
         ctx.save();
     }
@@ -181,6 +201,7 @@ function warpLaunch(options={}){
     }
 
     function updateSpeed(e){
+        // If mouse wheel scrolls up, increase speed, if down, decrease
         let new_speed = e.deltaY > 0 ? speed - step : speed + step;
         if (new_speed > 250){
             speed = 250;
