@@ -1,5 +1,5 @@
 /*
-Starfield JS v0.0.1
+Starfield JS v0.1.0
 Copyright 2018 Yaroslav de la Peña Smirnov
 All rights reserved.
 
@@ -36,6 +36,14 @@ function Particle(ix, iy, posz){
     this.ix = ix;
     this.iy = iy;
     this.posz = posz;
+
+    this.getX = function(cWidth){
+        return this.ix / this.posz * cWidth/8 + cWidth/2;
+    }
+
+    this.getY = function(cHeight){
+        return this.iy / this.posz * cHeight/8 + cHeight/2;
+    }
 }
 
 function warpLaunch(options={}){
@@ -117,13 +125,9 @@ function warpLaunch(options={}){
 
     function getNewParticle(){
         // Randomly assign them the needed parameters
-        let halfWidth = canvas.width/2;
-        let halfHeight = canvas.height/2;
-        //let ix = getRandomPos(halfWidth/20);
-        //let iy = getRandomPos(halfHeight/20);
-        let ix = getRandomPos(5);
-        let iy = getRandomPos(5);
-        let posz = randomRange(50, 200);
+        let ix = getRandomPos(canvas.width/3);
+        let iy = getRandomPos(canvas.height/2);
+        let posz = randomRange(0, 200);
         return new Particle(ix, iy, posz);
     }
 
@@ -137,14 +141,10 @@ function warpLaunch(options={}){
     }
 
     function drawStar(particle){
-        let scale = particle.posz/100;
+        let scale = (1 - particle.posz/200) * 1.5 + 0.25;
         let p = scale/2;
-        let halfWidth = canvas.width/2;
-        let halfHeight = canvas.height/2;
-        let posx = (particle.ix+halfWidth*particle.ix)*p;
-        let posy = (particle.iy+halfHeight*particle.iy)*p;
         ctx.globalAlpha = p;
-        ctx.translate(posx, posy);
+        ctx.translate(particle.getX(canvas.width), particle.getY(canvas.height));
         ctx.scale(scale, scale);
         ctx.drawImage(starsprite, 0, 0);
         ctx.restore();
@@ -166,10 +166,10 @@ function warpLaunch(options={}){
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for(let i = 0; i < max_particles; i++){
             let particle = particles[i];
-            particle.posz += delta*speed/1000;
-            if (particle.posz > 200){
+            particle.posz -= delta*speed/1000;
+            if (particle.posz <= 0){
                 particle = getNewParticle();
-                particle.posz = 50;
+                particle.posz = 200;
                 particles[i] = particle;
             }
             drawStar(particle);
