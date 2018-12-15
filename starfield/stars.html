@@ -39,7 +39,12 @@ html{
 </style>
     <script>
         window.addEventListener("load", function(){
-            warpLaunch();
+            warpLaunch({
+                'max_particles': 1500,
+                'speed': 70,
+                'step': 10,
+                'interactive': true,
+            });
         });
     </script>
     </head>

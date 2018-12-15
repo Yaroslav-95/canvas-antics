@@ -1,5 +1,5 @@
 /*
-Starfield JS v0.1.0
+Starfield JS v0.2.0
 Copyright 2018 Yaroslav de la Peña Smirnov
 All rights reserved.
 
@@ -32,11 +32,15 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+// ix and iy are the x,y coordinates in 'space', posz is how
+// far away from the screen the particle/star is
 function Particle(ix, iy, posz){
     this.ix = ix;
     this.iy = iy;
     this.posz = posz;
 
+    // getX and getY get the projected coordinates, that is the real x, y
+    // coordinate on 'screen' rather than 'space'
     this.getX = function(cWidth){
         return this.ix / this.posz * cWidth/8 + cWidth/2;
     }
@@ -49,9 +53,12 @@ function Particle(ix, iy, posz){
 function warpLaunch(options={}){
     /* >>> Some parameters <<< */
     var max_particles =
-        options.hasOwnProperty('max_particles') ? options['max_particles'] : 1000;
+        options.hasOwnProperty('max_particles') ? options['max_particles'] : 500;
     var speed =
-        options.hasOwnProperty('speed') ? options['speed'] : 30;
+        options.hasOwnProperty('speed') ? options['speed'] : 50;
+    var step =
+        options.hasOwnProperty('step') ? options['step'] : 2;
+    var interactive = options['interactive'];
 
     var canvas = document.getElementById("stars");
     if(!canvas){
@@ -64,7 +71,7 @@ function warpLaunch(options={}){
     // The canvas where we will prerender our star
     var starsprite = document.createElement("canvas");
 
-    // This will be populated with all the 'particles' (i.e. snowflakes)
+    // This will be populated with all the 'particles' (i.e. stars)
     // on the canvas
     var particles = [];
     var last = null; // previous timestamp
@@ -92,18 +99,7 @@ function warpLaunch(options={}){
         initParticles();
     }
 
-    /*function prerender(){
-        let sctx = starsprite.getContext("2d");
-        sctx.imageSmoothingEnabled = false;
-        sctx.webkitImageSmoothingEnabled = false;
-        starsprite.width = 8;
-        starsprite.height = 8;
-        sctx.fillStyle = "rgb(255, 255, 255, 0.5)";
-        sctx.fillRect(0, 3, 8, 2);
-        sctx.fillRect(3, 0, 2, 8);
-        sctx.fillRect(2, 2, 4, 4);
-    }*/
-
+    // Prerender our star to an offscreen canvas to improve performance
     function prerender(){
         let sctx = starsprite.getContext("2d");
         sctx.imageSmoothingEnabled = false;
@@ -131,7 +127,10 @@ function warpLaunch(options={}){
         return new Particle(ix, iy, posz);
     }
 
+    // Init all the stars, and place them randomly on screen
     function initParticles(){
+        particles.length = 0;
+        ctx.save();
         for (let i = 0; i < max_particles; ++i){
             let particle = getNewParticle();
             particles.push(particle);
@@ -140,6 +139,7 @@ function warpLaunch(options={}){
         requestedFrame = window.requestAnimationFrame(nextFrame);
     }
 
+    // Function to draw prerender star to the onscreen canvas
     function drawStar(particle){
         let scale = (1 - particle.posz/200) * 1.5 + 0.25;
         let p = scale/2;
@@ -164,6 +164,8 @@ function warpLaunch(options={}){
             return;
         }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Decrease the distance from the screen of the star based
+        // based on the speed
         for(let i = 0; i < max_particles; i++){
             let particle = particles[i];
             particle.posz -= delta*speed/1000;
@@ -178,8 +180,27 @@ function warpLaunch(options={}){
         requestedFrame = window.requestAnimationFrame(nextFrame);
     }
 
+    function updateSpeed(e){
+        let new_speed = e.deltaY > 0 ? speed - step : speed + step;
+        if (new_speed > 250){
+            speed = 250;
+            return
+        }
+        if (new_speed <= 0){
+            speed = 2;
+            return;
+        }
+        speed = new_speed;
+        console.log(speed);
+    }
+
     prerender();
     resize();
+
+    if (interactive){
+        console.log("Interactivity is on, move the mouse wheel to control speed");
+        document.addEventListener("wheel", updateSpeed);
+    }
 
     window.addEventListener("resize", resize);
 }
