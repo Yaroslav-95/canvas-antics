@@ -1,5 +1,5 @@
 /*
-Starfield JS v0.2.0
+Starfield JS v1.0.0
 Copyright 2018 Yaroslav de la Peña Smirnov
 All rights reserved.
 
@@ -61,6 +61,7 @@ function warpLaunch(options={}){
         options.hasOwnProperty('step') ? options['step'] : 2;
     var interactive = options['interactive'];
     var color = options['color'];
+    var ox, oy;
 
     var canvas = document.getElementById("stars");
     if(!canvas){
@@ -69,9 +70,6 @@ function warpLaunch(options={}){
     }
     var container = canvas.parentNode;
     var ctx = canvas.getContext("2d");
-
-    // The canvas where we will prerender our star
-    var starsprite = document.createElement("canvas");
 
     // This will be populated with all the 'particles' (i.e. stars)
     // on the canvas
@@ -92,6 +90,16 @@ function warpLaunch(options={}){
         // and accordingly resize the canvas, then reinitialize
         canvas.height = parseInt(container.offsetHeight);
         canvas.width = parseInt(container.offsetWidth);
+        ox = canvas.height/3;
+        oy = canvas.width/2;
+        if (canvas.width < canvas.height){
+            ox = canvas.height/2;
+            oy = canvas.width/3;
+        }
+        if (canvas.width == canvas.height){
+            ox = canvas.height/3;
+            oy = canvas.width/3;
+        }
         try{ window.cancelAnimationFrame(requestedFrame); }
         catch(e) {}
         ctx.imageSmoothingEnabled = false;
@@ -101,30 +109,16 @@ function warpLaunch(options={}){
         initParticles();
     }
 
-    // Prerender our star to an offscreen canvas to improve performance
-    function prerender(){
-        let sctx = starsprite.getContext("2d");
-        sctx.imageSmoothingEnabled = false;
-        sctx.webkitImageSmoothingEnabled = false;
-        starsprite.width = 5;
-        starsprite.height = 5;
-        sctx.fillStyle = "rgb(255, 255, 255, 0.4)";
-        sctx.fillRect(0, 2, 5, 1);
-        sctx.fillRect(2, 0, 1, 5);
-        sctx.fillStyle = "rgb(255, 255, 255, 0.5)";
-        sctx.fillRect(1, 1, 3, 3);
-    }
-
     function getRandomPos(n){
         let i = randomRange(-n, n);
-        if (i == 0) return getRandomPos();
+        if (i == 0) return 1;
         return i;
     }
 
     function getNewParticle(){
         // Randomly assign them the needed parameters
-        let ix = getRandomPos(canvas.width/3);
-        let iy = getRandomPos(canvas.height/2);
+        let ix = getRandomPos(ox)
+        let iy = getRandomPos(oy);
         let posz = randomRange(0, 200);
         if (!color)
             return new Particle(ix, iy, posz, [255, 255, 255]);
@@ -215,7 +209,6 @@ function warpLaunch(options={}){
         console.log(speed);
     }
 
-    prerender();
     resize();
 
     if (interactive){
