@@ -1,5 +1,5 @@
 /*
-Starfield JS v1.0.0
+Starfield JS v1.0.1
 Copyright 2018 Yaroslav de la Peña Smirnov
 All rights reserved.
 
@@ -90,15 +90,13 @@ function warpLaunch(options={}){
         // and accordingly resize the canvas, then reinitialize
         canvas.height = parseInt(container.offsetHeight);
         canvas.width = parseInt(container.offsetWidth);
-        ox = canvas.height/3;
-        oy = canvas.width/2;
-        if (canvas.width < canvas.height){
-            ox = canvas.height/2;
-            oy = canvas.width/3;
+        ox = canvas.width/3;
+        oy = canvas.height/2;
+        if (canvas.height/canvas.width < 0.25){
+            oy = canvas.height*1.5;
         }
-        if (canvas.width == canvas.height){
-            ox = canvas.height/3;
-            oy = canvas.width/3;
+        else if (canvas.height/canvas.width < 0.5){
+            oy = canvas.height;
         }
         try{ window.cancelAnimationFrame(requestedFrame); }
         catch(e) {}
@@ -196,6 +194,8 @@ function warpLaunch(options={}){
 
     function updateSpeed(e){
         // If mouse wheel scrolls up, increase speed, if down, decrease
+        e.preventDefault();
+        e.stopPropagation();
         let new_speed = e.deltaY > 0 ? speed - step : speed + step;
         if (new_speed > 250){
             speed = 250;
@@ -213,7 +213,7 @@ function warpLaunch(options={}){
 
     if (interactive){
         console.log("Interactivity is on, move the mouse wheel to control speed");
-        document.addEventListener("wheel", updateSpeed);
+        canvas.addEventListener("wheel", updateSpeed);
     }
 
     window.addEventListener("resize", resize);
