@@ -39,12 +39,15 @@ html{
 </style>
     <script>
         window.addEventListener("load", function(){
+            var curr_url = new URL(window.location.href);
+            var color = curr_url.searchParams.get("color");
+            color = color == null ? true : color == "true";
             warpLaunch({
                 'max_particles': 1500,
                 'speed': 70,
                 'step': 10,
                 'interactive': true,
-                'color': true,
+                'color': color,
             });
         });
     </script>

@@ -1,6 +1,6 @@
 /*
 DVD Screensaver JS v1.0.0
-Copyright 2018 Yaroslav de la Peña Smirnov
+Copyright 2019 Yaroslav de la Peña Smirnov
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
