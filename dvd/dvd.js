@@ -1,5 +1,5 @@
 /*
-DVD Screensaver JS v1.0.2
+DVD Screensaver JS v1.0.3
 Copyright 2019 Yaroslav de la Peña Smirnov
 All rights reserved.
 
@@ -48,10 +48,12 @@ function playDVD(options={}){
     ];
     try{
         if(options["colors"].length > 0){
-            colors = option["colors"];
+            colors = options["colors"];
         }
     }
-    catch(e){}
+    catch(e){
+        console.log(e)
+    }
 
     var canvas = document.getElementById("dvd");
     if(!canvas){
@@ -108,11 +110,9 @@ function playDVD(options={}){
         else if(py == 0)
             direction[1] = 1;
         // Change the color randomly
-        if (colors.length > 1){
-            ctx.restore();
-            ctx.fillStyle = colors[randomRange(0, colors.length+1)];
-            ctx.save();
-        }
+        ctx.restore();
+        ctx.fillStyle = colors[randomRange(0, colors.length+1)];
+        ctx.save();
     }
 
     function initDVD(){
