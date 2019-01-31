@@ -1,5 +1,5 @@
 /*
-DVD Screensaver JS v0.1.0
+DVD Screensaver JS v1.0.0
 Copyright 2018 Yaroslav de la Peña Smirnov
 All rights reserved.
 
@@ -32,7 +32,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-function dvdScreensaver(options={}){
+function playDVD(options={}){
     /* >>> Parameters <<<
     There are just two customizable parameters
     The speed in pixels/s
@@ -60,6 +60,7 @@ function dvdScreensaver(options={}){
     }
     var container = canvas.parentNode;
     var ctx = canvas.getContext("2d");
+    ctx.fillStyle = colors[0];
     ctx.save();
 
     /* >>> State variables <<<
@@ -75,7 +76,6 @@ function dvdScreensaver(options={}){
     var boundx;
     var boundy;
     var last = null;
-    var currentColor = colors[0];
 
     function randomRange(min, max){
         return Math.floor(Math.random() * (max - min - 1)) + min;
@@ -108,9 +108,11 @@ function dvdScreensaver(options={}){
         else if(py == 0)
             direction[1] = 1;
         // Change the color randomly
-        ctx.restore();
-        ctx.fillStyle = colors[randomRange(0, colors.length+1)];
-        ctx.save();
+        if (colors.length > 1){
+            ctx.restore();
+            ctx.fillStyle = colors[randomRange(0, colors.length+1)];
+            ctx.save();
+        }
     }
 
     function initDVD(){
@@ -160,29 +162,6 @@ function dvdScreensaver(options={}){
 
     resize();
     window.addEventListener("resize", resize);
-}
-
-// For test purposes
-function drawLogo(color="#012fff"){
-    var canvas = document.getElementById("dvd");
-    if(!canvas){
-        console.log("There is no #dvd canvas to draw on! Aborting...");
-        return;
-    }
-    var container = canvas.parentNode;
-    var ctx = canvas.getContext("2d");
-    ctx.save();
-
-    canvas.height = parseInt(container.offsetHeight);
-    canvas.width = parseInt(container.offsetWidth);
-
-    let px = canvas.width - 340;
-    let py = canvas.height - 154;
-    ctx.translate(px, py);
-    ctx.fillStyle = "#012fff";
-    ctx.fill(logoPath);
-    ctx.restore();
-    ctx.save();
 }
 
 // This is the path for the logo, it is just a 'd' SVG string
