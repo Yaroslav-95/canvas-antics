@@ -39,6 +39,7 @@ function playDVD(options={}){
     And a list of colors
     */
     var speed = options.hasOwnProperty('speed') ? options['speed'] : 200;
+    var hit_counter = options.hasOwnProperty('hit_counter') ? options['hit_counter'] : false;
     var colors = [
         "#012fff",
         "#ff2190",
@@ -78,6 +79,9 @@ function playDVD(options={}){
     var boundx;
     var boundy;
     var last = null;
+    var hits = 0;
+
+    var debugxy = false;
 
     function randomRange(min, max){
         return Math.floor(Math.random() * (max - min - 1)) + min;
@@ -130,6 +134,22 @@ function playDVD(options={}){
         ctx.save();
     }
 
+    function drawCounter(){
+        ctx.font = '21px monospace';
+        ctx.fillStyle = '#d1bc55';
+        ctx.fillText('Hits: '+hits, 10, 25);
+        ctx.restore();
+        ctx.save();
+    }
+
+    function drawCoordinates(){
+        ctx.font = '21px monospace';
+        ctx.fillStyle = '#d1bc55';
+        ctx.fillText('XY: '+px+', '+py, 10, 50);
+        ctx.restore();
+        ctx.save();
+    }
+
     function nextFrame(timestamp){
         if(!last) last = timestamp;
         let delta = timestamp - last;
@@ -153,15 +173,30 @@ function playDVD(options={}){
         py = py > boundy ? boundy : py;
         px = px < 0 ? 0 : px;
         py = py < 0 ? 0 : py;
-        if (px === boundx || py === boundy || px == 0 || py == 0)
+
+        if (px === boundx || py === boundy || px == 0 || py == 0){
             bounce();
+            // If it hits the corner, update hit counter
+            if ((px == boundx && py == boundy) || (px == boundx && py == 0) ||
+                (px == 0 && py == boundy) || (px == 0 && py == 0))
+                hits++;
+        }
+
         drawLogo();
+        if (hit_counter) drawCounter();
+        if (debugxy) drawCoordinates();
         last = timestamp;
         requestedFrame = window.requestAnimationFrame(nextFrame);
     }
 
     resize();
-    window.addEventListener("resize", resize);
+    window.addEventListener('resize', resize);
+    window.addEventListener('keypress', function(e){
+        if (e.code == 'KeyH')
+            hit_counter = !hit_counter;
+        if (e.code == 'KeyD')
+            debugxy = !debugxy;
+    });
 }
 
 // This is the path for the logo, it is just a 'd' SVG string
