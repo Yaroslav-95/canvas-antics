@@ -1,5 +1,5 @@
 /*
-VHS Tracking JS v0.1.1
+VHS Tracking JS v0.3.0
 Copyright 2019 Yaroslav de la Peña Smirnov
 All rights reserved.
 
@@ -39,9 +39,10 @@ function playVHS(options={}){
     And a list of colors
     */
     var picture = options.hasOwnProperty('picture') ? options['picture'] : false;
+    var video_src = options.hasOwnProperty('video') ? options['video'] : false;
     var bgcolor = options.hasOwnProperty('bgcolor') ? options['bgcolor'] : '#003afc';
 
-    var osd_text = 'PAUSE';
+    var osd_text = 'PLAY';
     var speed = 500;
 
     var canvas = document.getElementById("vhs");
@@ -59,16 +60,25 @@ function playVHS(options={}){
         image.src = picture;
     }
 
+    var video;
+    if(video_src){
+        video = document.createElement('video');
+        video.src = video_src;
+        video.load();
+    }
+
     /* >>> State variables <<<
     last is the timestamp of the last rendered frame
     */
     var font_size = 36;
     var r = 0;
     var d = 1;
-    var is_paused = true;
+    var is_paused = false;
     var last_play = 0;
     var stnoise = randomRange(30, canvas.height-60);
     var last = null;
+
+    var startpn = new Array(2);
 
     function randomRange(min, max){
         return Math.floor(Math.random() * (max - min - 1)) + min;
@@ -91,21 +101,29 @@ function playVHS(options={}){
 
     function initVHS(){
         drawBG();
+        startpn[0] = randomRange(80, 230);
+        startpn[1] = randomRange(canvas.height-350, canvas.height-200);
         requestedFrame = window.requestAnimationFrame(nextFrame);
     }
 
     function drawBG(){
         ctx.fillStyle = bgcolor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if(picture){
+        if(picture || video_src){
             let yd = 0;
-            if (!is_paused){
-                //let xr = randomRange(-30, 30);
-                //let xd = xr == 2 || xr == -2 ? xr : 0;
-                let yr = randomRange(-30, 30);
-                yd = yr == 1 || yr == -1 ? yr : 0;
+            let yr = is_paused ? randomRange(-10, 10) : randomRange(-30, 30);
+            let yi = is_paused ? 2 : 1;
+            yd = yr == yi || yr == -yi ? yr : 0;
+            if (video_src){
+                if(video.ended){
+                    osd_text = 'STOP';
+                    is_paused = true;
+                }
+                else
+                    ctx.drawImage(video, 0, yd, canvas.width, canvas.height);
             }
-            ctx.drawImage(image, 0, yd, canvas.width, canvas.height);
+            else
+                ctx.drawImage(image, 0, yd, canvas.width, canvas.height);
         }
         ctx.restore();
         ctx.save();
@@ -144,7 +162,7 @@ function playVHS(options={}){
 
         let adv = Math.cos(r);
 
-        let line_adv = Math.floor(adv)+noise;
+        let line_adv = Math.floor(adv);
 
         // VHS Tracking
         for (let i = canvas.width*4*(canvas.height-20+line); i < oldImg.data.length; i += 4){
@@ -162,8 +180,8 @@ function playVHS(options={}){
             if(column >= canvas.width){
                 column = 0;
                 line++;
-                noise = randomRange(0, 15);
-                line_adv = Math.floor(Math.pow(adv*3, line/10))+noise;
+                noise = randomRange(0, (line+2)/2);
+                line_adv = Math.floor(Math.pow(adv*4, line/10))+noise;
             }
         }
 
@@ -176,7 +194,7 @@ function playVHS(options={}){
                 line = randomRange(3, maxl);
                 lineadv = randomRange(3, 30);
                 let endl = canvas.width*4*(line+randomRange(0, 10));
-                for(let j = canvas.width*4*line; j < endl; j++){
+                for(let j = canvas.width*4*line; j < endl; j+=4){
                     if (column < line_adv){
                         newImg.data[j] = 0;
                         newImg.data[j+1] = 0;
@@ -194,6 +212,27 @@ function playVHS(options={}){
         }
 
         // Paused noise
+        if(is_paused){
+            let noisel = true;
+            for(let x = 0; x < 2; x++){
+                let start = canvas.width*4*(startpn[x]+randomRange(0, 20));
+                let end = start+canvas.width*4*randomRange(100, 120);
+                column = 0;
+                for (let i = start; i < end; i+=4){
+                    if (column == 0){
+                        noisel = !noisel;
+                        column = noisel ? randomRange(3, Math.floor(canvas.width/2)) : randomRange(3, Math.floor(canvas.width/4));
+                    }
+                    if (noisel){
+                        newImg.data[i] = 255;
+                        newImg.data[i+1] = 255;
+                        newImg.data[i+2] = 255;
+                        newImg.data[i+3] = randomRange(160, 255);
+                    }
+                    column--;
+                }
+            }
+        }
 
         // CRT filter
         column = 0;
@@ -202,7 +241,7 @@ function playVHS(options={}){
         for (let i = 0; i < oldImg.data.length; i+=4){
             if (line % 3 != 0){
                 newImg.data[i] = newImg.data[i] + 10 > 255 ? 255 : newImg.data[i] + 10;
-                newImg.data[i+1] = newImg.data[i+1] + 10 > 255 ? 255 : newImg.data[i+1] + 10;
+                newImg.data[i+1] = newImg.data[i+1] + 15 > 255 ? 255 : newImg.data[i+1] + 15;
                 newImg.data[i+2] = newImg.data[i+2] + 15 > 255 ? 255 : newImg.data[i+2] + 15;
                 //oldImg.data[i+2] = 255;
             }
@@ -213,19 +252,9 @@ function playVHS(options={}){
             }
         }
 
-        // VHS bottom tracking
-        /*
-        column = 0;
-        let j = 0;
-        for (let i = canvas.width*4*(canvas.height-1); i < oldImg.data.length; i += 4){
-            oldImg.data[i] = oldImg.data[j];
-            oldImg.data[i+1] = oldImg.data[j+1];
-            oldImg.data[i+2] = oldImg.data[j+2];
-            column++;
-            j += 4;
-        }
-        */
         ctx.putImageData(newImg, 0, 0);
+        newImg = null;
+        oldImg = null;
     }
 
     function nextFrame(timestamp){
@@ -244,7 +273,12 @@ function playVHS(options={}){
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         drawBG();
-        applyEffects(delta);
+        if (picture){
+            applyEffects(delta);
+        }
+        else if(!video.ended){
+            applyEffects(delta);
+        }
         if (!is_paused && last_play <= 3000)
             last_play += delta;
         if (is_paused || last_play <= 3000)
@@ -254,13 +288,21 @@ function playVHS(options={}){
     }
 
     resize();
+    video.play();
     window.addEventListener('resize', resize);
     window.addEventListener('keypress', function(e){
         if (e.code == 'KeyP'){
             is_paused = !is_paused;
-            osd_text = osd_text == 'PAUSE' ? 'PLAY' : 'PAUSE';
+            startpn[0] = randomRange(80, 230);
+            startpn[1] = randomRange(canvas.height-350, canvas.height-200);
+            osd_text = osd_text == 'PLAY' ? 'PAUSE' : 'PLAY';
             stnoise = randomRange(30, canvas.height-60);
             last_play = 0;
+            if (!is_paused && video_src){
+                video.play();
+                return;
+            }
+            video.pause();
         }
     });
 }
