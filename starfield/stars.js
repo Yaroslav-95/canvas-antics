@@ -53,6 +53,8 @@ function Particle(ix, iy, posz, rgb){
 
 function warpLaunch(options={}){
     /* >>> Some parameters <<< */
+    var blur = 1.0;
+    var IBAH = 0;
     var max_particles =
         options.hasOwnProperty('max_particles') ? options['max_particles'] : 500;
     var speed =
@@ -175,7 +177,21 @@ function warpLaunch(options={}){
             requestedFrame = window.requestAnimationFrame(nextFrame);
             return;
         }
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (IBAH === 1) {
+        	blur -= 0.02;
+        	if (blur <= 0.0) {
+        		IBAH = 2;
+        	}
+        } else if (IBAH === 2) {
+        	blur += 0.03;
+        	if (blur >= 1.0) {
+        		IBAH = 0;
+        		blur = 1.0;
+        	}
+        }
+        ctx.fillStyle = "rgba(0, 0, 0," + blur + ")";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         // Decrease the distance from the screen of the star based
         // based on the speed
         for(let i = 0; i < max_particles; i++){
@@ -214,6 +230,16 @@ function warpLaunch(options={}){
     if (interactive){
         console.log("Interactivity is on, move the mouse wheel to control speed");
         canvas.addEventListener("wheel", updateSpeed);
+    	window.addEventListener('keypress', function(e){
+        	if (e.code == 'KeyQ')
+            	blur += 0.1;
+        	if (e.code == 'KeyE')
+            	blur -= 0.1;
+        	if (e.code == 'KeyW') {
+        		IBAH = 1;
+        		blur = 0.95;
+        	}
+    	});
     }
 
     window.addEventListener("resize", resize);
